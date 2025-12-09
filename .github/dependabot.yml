@@ -1,0 +1,32 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    groups:
+      all:
+        patterns:
+          - "*"
+    schedule:
+      interval: "daily"
+    cooldown:
+      default-days: 7
+  - package-ecosystem: "npm"
+    directory: "/"
+    groups:
+      all:
+        patterns:
+          - "*"
+    schedule:
+      interval: "daily"
+    cooldown:
+      default-days: 7
+  - package-ecosystem: "gomod"
+    directory: "/"
+    groups:
+      all:
+        patterns:
+          - "*"
+    schedule:
+      interval: "daily"
+    cooldown:
+      default-days: 7
