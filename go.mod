@@ -1,3 +1,3 @@
-module github.com/gahojin/go-iso8601duration
+module github.com/gahojin/go-date
 
 go 1.23
