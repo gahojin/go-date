@@ -58,6 +58,25 @@ func (d Date) AddDate(years int, months int, days int) Date {
 	return FromTime(t)
 }
 
+// FirstDayOfMonth はその月の月初（1日）のDateを返します。
+// ゼロ値の場合はゼロ値のDateを返します。
+func (d Date) FirstDayOfMonth() Date {
+	if d.IsZero() {
+		return Date{}
+	}
+	return New(d.year, d.month, 1)
+}
+
+// LastDayOfMonth はその月の月末のDateを返します。
+// ゼロ値の場合はゼロ値のDateを返します。
+func (d Date) LastDayOfMonth() Date {
+	if d.IsZero() {
+		return Date{}
+	}
+	last := d.DaysIn()
+	return Date{d.year, d.month, last}
+}
+
 // YearMonth は日付を "YYYYMM" 形式の文字列として返します。
 func (d Date) YearMonth() string {
 	return d.Format("200601")
