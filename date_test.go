@@ -167,6 +167,100 @@ func TestDate_AddDate(t *testing.T) {
 	}
 }
 
+// TestDate_FirstDayOfMonth は FirstDayOfMonth メソッドがその月の初日（1日）を返すかをテストする。
+func TestDate_FirstDayOfMonth(t *testing.T) {
+	tests := []struct {
+		name string
+		d    date.Date
+		want date.Date
+	}{
+		{
+			name: "normal date",
+			d:    date.New(2024, time.May, 15),
+			want: date.New(2024, time.May, 1),
+		},
+		{
+			name: "already first day of month",
+			d:    date.New(2024, time.May, 1),
+			want: date.New(2024, time.May, 1),
+		},
+		{
+			name: "end of month (leap year feb)",
+			d:    date.New(2024, time.February, 29),
+			want: date.New(2024, time.February, 1),
+		},
+		{
+			name: "zero value",
+			d:    date.Date{},
+			want: date.Date{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.d.FirstDayOfMonth()
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+// TestDate_LastDayOfMonth は LastDayOfMonth メソッドがその月の末日を返すかをテストする。
+func TestDate_LastDayOfMonth(t *testing.T) {
+	tests := []struct {
+		name string
+		d    date.Date
+		want date.Date
+	}{
+		{
+			name: "normal date (30-day month)",
+			d:    date.New(2024, time.April, 15),
+			want: date.New(2024, time.April, 30),
+		},
+		{
+			name: "normal date (31-day month)",
+			d:    date.New(2024, time.May, 15),
+			want: date.New(2024, time.May, 31),
+		},
+		{
+			name: "already last day of month",
+			d:    date.New(2024, time.May, 31),
+			want: date.New(2024, time.May, 31),
+		},
+		{
+			name: "first day of month",
+			d:    date.New(2024, time.May, 1),
+			want: date.New(2024, time.May, 31),
+		},
+		{
+			name: "february in leap year",
+			d:    date.New(2024, time.February, 15),
+			want: date.New(2024, time.February, 29),
+		},
+		{
+			name: "february in non-leap year",
+			d:    date.New(2023, time.February, 15),
+			want: date.New(2023, time.February, 28),
+		},
+		{
+			name: "december (year boundary)",
+			d:    date.New(2024, time.December, 15),
+			want: date.New(2024, time.December, 31),
+		},
+		{
+			name: "zero value",
+			d:    date.Date{},
+			want: date.Date{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.d.LastDayOfMonth()
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 // TestDate_IsZero は IsZero メソッドがゼロ値を正しく判定できるかをテストする。
 func TestDate_IsZero(t *testing.T) {
 	tests := []struct {
