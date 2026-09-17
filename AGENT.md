@@ -6,7 +6,7 @@
 
 - **モジュール名**: `github.com/gahojin/go-date`
 - **主要パッケージ**: `date` (`package date`)
-- **Goバージョン**: Go 1.23 以上
+- **Goバージョン**: Go 1.24 以上
 - **説明**: Go用の日付操作ライブラリ
 
 ## 開発環境とツール
@@ -24,14 +24,14 @@
 非対話型シェル（エージェント実行環境やCIなど）では、事前に `mise` をアクティベートすることで、`mise` 管理下のツール（`go`, `golangci-lint`, `lefthook` 等）を直接コマンド名で呼び出せるようになります。
 
 ```bash
-eval "$(/opt/homebrew/bin/mise activate bash)"
+eval "$(mise activate bash)"
 ```
 
-※ または `export PATH="/opt/homebrew/bin:$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"` を設定するか、各コマンドに `mise exec --` を付与して実行することも可能です。
+※ または `mise exec --` を各コマンドに付与して実行することも可能です。
 
 ## コマンド一覧
 
-`mise` をアクティベート（`eval "$(/opt/homebrew/bin/mise activate bash)"`）した状態であれば、直接各ツールを実行できます。
+`mise` をアクティベート（`eval "$(mise activate bash)"`）した状態であれば、直接各ツールを実行できます。
 
 ### テスト実行
 ```bash
@@ -45,7 +45,7 @@ go test -v ./...
 go test -cover ./...
 
 # または mise exec 経由
-export PATH="/opt/homebrew/bin:$PATH" && mise exec -- go test ./...
+mise exec -- go test ./...
 ```
 
 ### リント & フォーマット

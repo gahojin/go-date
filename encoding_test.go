@@ -118,7 +118,22 @@ func TestTime_MarshalText(t *testing.T) {
 			want: []byte("15:30:45"),
 		},
 		{
-			name: "zero time",
+			name: "time with nanoseconds",
+			tm:   date.NewTime(15, 30, 45, 123456789),
+			want: []byte("15:30:45.123456789"),
+		},
+		{
+			name: "time with trailing zero nanoseconds",
+			tm:   date.NewTime(15, 30, 45, 500000000),
+			want: []byte("15:30:45.5"),
+		},
+		{
+			name: "valid midnight time",
+			tm:   date.NewTime(0, 0, 0, 0),
+			want: []byte("00:00:00"),
+		},
+		{
+			name: "unset zero time",
 			tm:   date.Time{},
 			want: []byte{},
 		},
@@ -145,6 +160,18 @@ func TestTime_UnmarshalText(t *testing.T) {
 			name:    "valid time string",
 			input:   []byte("15:30:45"),
 			want:    date.NewTime(15, 30, 45, 0),
+			wantErr: false,
+		},
+		{
+			name:    "valid time with fractional seconds",
+			input:   []byte("15:30:45.123456789"),
+			want:    date.NewTime(15, 30, 45, 123456789),
+			wantErr: false,
+		},
+		{
+			name:    "valid midnight string",
+			input:   []byte("00:00:00"),
+			want:    date.NewTime(0, 0, 0, 0),
 			wantErr: false,
 		},
 		{
@@ -206,6 +233,22 @@ func TestJSON_RoundTrip(t *testing.T) {
 				Time: date.NewTime(15, 30, 45, 0),
 			},
 			json: `{"date":"2024-05-01","time":"15:30:45"}`,
+		},
+		{
+			name: "date and time with nanoseconds",
+			val: item{
+				Date: date.New(2024, time.May, 1),
+				Time: date.NewTime(15, 30, 45, 123456789),
+			},
+			json: `{"date":"2024-05-01","time":"15:30:45.123456789"}`,
+		},
+		{
+			name: "date and valid midnight time",
+			val: item{
+				Date: date.New(2024, time.May, 1),
+				Time: date.NewTime(0, 0, 0, 0),
+			},
+			json: `{"date":"2024-05-01","time":"00:00:00"}`,
 		},
 		{
 			name: "zero date and time",

@@ -7,10 +7,11 @@ import (
 
 // Time は時・分・秒・ナノ秒を表す構造体です。
 type Time struct {
-	hour int
-	min  int
-	sec  int
-	nsec int
+	hour    int
+	min     int
+	sec     int
+	nsec    int
+	present bool
 }
 
 // NewTime は指定された時・分・秒・ナノ秒からTimeを生成して返します。
@@ -18,20 +19,22 @@ type Time struct {
 func NewTime(hour, min, sec, nsec int) Time {
 	t := time.Date(2000, 1, 1, hour, min, sec, nsec, time.UTC)
 	return Time{
-		hour: t.Hour(),
-		min:  t.Minute(),
-		sec:  t.Second(),
-		nsec: t.Nanosecond(),
+		hour:    t.Hour(),
+		min:     t.Minute(),
+		sec:     t.Second(),
+		nsec:    t.Nanosecond(),
+		present: true,
 	}
 }
 
 // TimeFromTime は time.Time から Time を生成して返します。
 func TimeFromTime(t time.Time) Time {
 	return Time{
-		hour: t.Hour(),
-		min:  t.Minute(),
-		sec:  t.Second(),
-		nsec: t.Nanosecond(),
+		hour:    t.Hour(),
+		min:     t.Minute(),
+		sec:     t.Second(),
+		nsec:    t.Nanosecond(),
+		present: true,
 	}
 }
 
@@ -142,8 +145,11 @@ func (t Time) Format(layout string) string {
 	return t.ToTime(nil).Format(layout)
 }
 
-// String は時刻を "HH:MM:SS" 形式（time.TimeOnly）の文字列として返します。
+// String は時刻を文字列として返します。ナノ秒がある場合は小数秒を含みます（例: "15:04:05.123456789"）。
 func (t Time) String() string {
+	if t.nsec != 0 {
+		return t.Format("15:04:05.999999999")
+	}
 	return t.Format(time.TimeOnly)
 }
 
@@ -154,9 +160,10 @@ func ParseTime(layout, value string) (Time, error) {
 		return Time{}, err
 	}
 	return Time{
-		hour: parsed.Hour(),
-		min:  parsed.Minute(),
-		sec:  parsed.Second(),
-		nsec: parsed.Nanosecond(),
+		hour:    parsed.Hour(),
+		min:     parsed.Minute(),
+		sec:     parsed.Second(),
+		nsec:    parsed.Nanosecond(),
+		present: true,
 	}, nil
 }

@@ -36,23 +36,25 @@ func (d *Date) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// MarshalText は時刻を "HH:MM:SS" 形式のバイトスライスとしてマーシャルします。
-// ゼロ値の場合は空のバイトスライスを返します。
+// MarshalText は時刻をバイトスライスとしてマーシャルします。
+// 未設定値（ゼロ値）の場合は空のバイトスライスを返します。
+// 有効な時刻の場合は "HH:MM:SS"（ナノ秒がある場合は小数秒を含む）形式で返します。
 func (t Time) MarshalText() ([]byte, error) {
-	if t.IsZero() {
+	if !t.present {
 		return []byte{}, nil
 	}
 	return []byte(t.String()), nil
 }
 
-// UnmarshalText は "HH:MM:SS" 形式のテキストからTimeをアンマーシャルします。
-// テキストが空の場合はゼロ値を設定します。
+// UnmarshalText はテキストからTimeをアンマーシャルします。
+// テキストが空の場合は未設定のゼロ値を設定します。
+// "HH:MM:SS" および小数秒付きの "HH:MM:SS.sssssssss" 形式を受け付けます。
 func (t *Time) UnmarshalText(text []byte) error {
 	if len(text) == 0 {
 		*t = Time{}
 		return nil
 	}
-	parsed, err := ParseTime(time.TimeOnly, string(text))
+	parsed, err := ParseTime("15:04:05.999999999", string(text))
 	if err != nil {
 		return err
 	}

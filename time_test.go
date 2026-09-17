@@ -289,6 +289,9 @@ func TestTime_Format_String(t *testing.T) {
 	assert.Equal(t, "15:30:45", tm.String())
 	assert.Equal(t, "15:30", tm.Format("15:04"))
 	assert.Equal(t, "03:30 PM", tm.Format("03:04 PM"))
+
+	tmNano := date.NewTime(15, 30, 45, 123456789)
+	assert.Equal(t, "15:30:45.123456789", tmNano.String())
 }
 
 // TestParseTime は ParseTime 関数をテストする。
@@ -312,6 +315,13 @@ func TestParseTime(t *testing.T) {
 			layout:  "15:04",
 			value:   "09:15",
 			want:    date.NewTime(9, 15, 0, 0),
+			wantErr: false,
+		},
+		{
+			name:    "valid time with nanoseconds layout",
+			layout:  "15:04:05.999999999",
+			value:   "15:30:45.123456789",
+			want:    date.NewTime(15, 30, 45, 123456789),
 			wantErr: false,
 		},
 		{
