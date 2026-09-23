@@ -2,6 +2,7 @@ package date
 
 import (
 	"cmp"
+	"encoding"
 	"time"
 )
 
@@ -11,6 +12,13 @@ type Date struct {
 	month time.Month
 	day   int
 }
+
+// 型チェック
+var (
+	_ encoding.TextMarshaler   = (*Date)(nil)
+	_ encoding.TextUnmarshaler = (*Date)(nil)
+	_ IsZeroer                 = (*Date)(nil)
+)
 
 // New は指定された年・月・日からDateを生成して返します。
 // time.Dateと同様に、正規化された日付（例: 2024年1月32日 -> 2024年2月1日）を生成します。
@@ -195,6 +203,10 @@ func (d Date) ToTime(loc *time.Location) time.Time {
 		loc = time.Local
 	}
 	return time.Date(d.year, d.month, d.day, 0, 0, 0, 0, loc)
+}
+
+func (d Date) ToCompact() CompactDate {
+	return CompactDate{d}
 }
 
 // Format は指定されたレイアウトに従って日付を文字列にフォーマットします。
