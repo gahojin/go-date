@@ -53,3 +53,25 @@ func (t *Time) UnmarshalText(text []byte) error {
 	*t = parsed
 	return nil
 }
+
+// MarshalText は日付を "YYYYMMDD" 形式でマーシャルします。
+func (d CompactDate) MarshalText() ([]byte, error) {
+	if d.IsZero() {
+		return nil, nil
+	}
+	return []byte(d.CompactString()), nil
+}
+
+// UnmarshalText は "YYYYMMDD" 形式の文字列をパースします。
+func (d *CompactDate) UnmarshalText(text []byte) error {
+	if len(text) == 0 {
+		*d = CompactDate{}
+		return nil
+	}
+	parsed, err := Parse("20060102", string(text))
+	if err != nil {
+		return err
+	}
+	d.Date = parsed
+	return nil
+}

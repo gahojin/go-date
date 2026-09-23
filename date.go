@@ -205,6 +205,10 @@ func (d Date) ToTime(loc *time.Location) time.Time {
 	return time.Date(d.year, d.month, d.day, 0, 0, 0, 0, loc)
 }
 
+func (d Date) ToCompact() CompactDate {
+	return CompactDate{d}
+}
+
 // Format は指定されたレイアウトに従って日付を文字列にフォーマットします。
 func (d Date) Format(layout string) string {
 	return d.ToTime(nil).Format(layout)
