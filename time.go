@@ -2,6 +2,7 @@ package date
 
 import (
 	"cmp"
+	"encoding"
 	"time"
 )
 
@@ -13,6 +14,13 @@ type Time struct {
 	nsec    int
 	present bool
 }
+
+// 型チェック
+var (
+	_ encoding.TextMarshaler   = (*Time)(nil)
+	_ encoding.TextUnmarshaler = (*Time)(nil)
+	_ IsZeroer                 = (*Time)(nil)
+)
 
 // NewTime は指定された時・分・秒・ナノ秒からTimeを生成して返します。
 // time.Dateと同様に、正規化された時刻（例: 25時 -> 1時、-1分 -> 前の時間の59分）を生成します。

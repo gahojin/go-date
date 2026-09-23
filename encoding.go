@@ -1,15 +1,7 @@
 package date
 
 import (
-	"encoding"
 	"time"
-)
-
-var (
-	_ encoding.TextMarshaler   = (*Date)(nil)
-	_ encoding.TextUnmarshaler = (*Date)(nil)
-	_ encoding.TextMarshaler   = (*Time)(nil)
-	_ encoding.TextUnmarshaler = (*Time)(nil)
 )
 
 // MarshalText は日付を "YYYY-MM-DD" 形式のバイトスライスとしてマーシャルします。
