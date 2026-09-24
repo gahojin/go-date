@@ -69,12 +69,69 @@ func TestNew(t *testing.T) {
 
 // TestFromTime は FromTime 関数が time.Time から Date を正しく生成するかをテストする。
 func TestFromTime(t *testing.T) {
-	tVal := time.Date(2024, time.May, 1, 15, 30, 45, 0, time.UTC)
-	d := date.FromTime(tVal)
+	jst := time.FixedZone("JST", 9*60*60)
 
-	assert.Equal(t, 2024, d.Year())
-	assert.Equal(t, time.May, d.Month())
-	assert.Equal(t, 1, d.Day())
+	tests := []struct {
+		name string
+		t    time.Time
+		want date.Date
+	}{
+		{
+			name: "UTC time",
+			t:    time.Date(2024, 5, 1, 10, 0, 0, 0, time.UTC),
+			want: date.New(2024, 5, 1),
+		},
+		{
+			name: "keeps the time.Time's own location (JST, no conversion)",
+			t:    time.Date(2024, 5, 1, 23, 30, 0, 0, jst),
+			want: date.New(2024, 5, 1),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := date.FromTime(tt.t)
+			assert.True(t, tt.want.Equal(got))
+		})
+	}
+}
+
+// TestFromTimeIn は FromTimeIn 関数をテストする。
+func TestFromTimeIn(t *testing.T) {
+	jst := time.FixedZone("JST", 9*60*60)
+
+	tests := []struct {
+		name string
+		tm   time.Time
+		loc  *time.Location
+		want date.Date
+	}{
+		{
+			name: "converts UTC to JST, crossing the date boundary",
+			tm:   time.Date(2024, 5, 1, 23, 30, 0, 0, time.UTC),
+			loc:  jst,
+			want: date.New(2024, 5, 2),
+		},
+		{
+			name: "converts JST to UTC, crossing the date boundary backwards",
+			tm:   time.Date(2024, 5, 1, 1, 0, 0, 0, jst),
+			loc:  time.UTC,
+			want: date.New(2024, 4, 30),
+		},
+		{
+			name: "nil location defaults to time.Local",
+			tm:   time.Date(2024, 5, 1, 10, 0, 0, 0, time.UTC),
+			loc:  nil,
+			want: date.FromTime(time.Date(2024, 5, 1, 10, 0, 0, 0, time.UTC).In(time.Local)),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := date.FromTimeIn(tt.tm, tt.loc)
+			assert.True(t, tt.want.Equal(got))
+		})
+	}
 }
 
 // TestDate_Year_Month_Day は Year, Month, Day メソッドが各値を正しく返すかをテストする。

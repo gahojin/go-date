@@ -67,6 +67,44 @@ func TestNewCompactDate(t *testing.T) {
 	}
 }
 
+// TestCompactFromTimeIn は CompactFromTimeIn 関数をテストする。
+func TestCompactFromTimeIn(t *testing.T) {
+	jst := time.FixedZone("JST", 9*60*60)
+
+	tests := []struct {
+		name string
+		tm   time.Time
+		loc  *time.Location
+		want CompactDate
+	}{
+		{
+			name: "converts UTC to JST, crossing the date boundary",
+			tm:   time.Date(2024, 5, 1, 23, 30, 0, 0, time.UTC),
+			loc:  jst,
+			want: NewCompact(2024, 5, 2),
+		},
+		{
+			name: "converts JST to UTC, crossing the date boundary backwards",
+			tm:   time.Date(2024, 5, 1, 1, 0, 0, 0, jst),
+			loc:  time.UTC,
+			want: NewCompact(2024, 4, 30),
+		},
+		{
+			name: "nil location defaults to time.Local",
+			tm:   time.Date(2024, 5, 1, 23, 30, 0, 0, jst),
+			loc:  nil,
+			want: NewCompact(2024, 5, 1),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := CompactFromTimeIn(tt.tm, tt.loc)
+			assert.True(t, tt.want.Equal(got.Date))
+		})
+	}
+}
+
 type testCompactDateData struct {
 	Value    CompactDate
 	Nullable *CompactDate `json:",omitempty"`

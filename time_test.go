@@ -102,13 +102,69 @@ func TestNewTime(t *testing.T) {
 
 // TestTimeFromTime は TimeFromTime 関数が time.Time から Time を正しく生成するかをテストする。
 func TestTimeFromTime(t *testing.T) {
-	tVal := time.Date(2024, time.May, 1, 15, 30, 45, 123456789, time.UTC)
-	tm := date.TimeFromTime(tVal)
+	jst := time.FixedZone("JST", 9*60*60)
 
-	assert.Equal(t, 15, tm.Hour())
-	assert.Equal(t, 30, tm.Minute())
-	assert.Equal(t, 45, tm.Second())
-	assert.Equal(t, 123456789, tm.Nanosecond())
+	tests := []struct {
+		name string
+		t    time.Time
+		want date.Time
+	}{
+		{
+			name: "UTC time",
+			t:    time.Date(2024, 5, 1, 15, 30, 45, 123456789, time.UTC),
+			want: date.NewTime(15, 30, 45, 123456789),
+		},
+		{
+			name: "keeps the time.Time's own location (JST, no conversion)",
+			t:    time.Date(2024, 5, 1, 23, 30, 0, 0, jst),
+			want: date.NewTime(23, 30, 0, 0),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := date.TimeFromTime(tt.t)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+// TestTimeFromTimeIn は TimeFromTimeIn 関数をテストする。
+func TestTimeFromTimeIn(t *testing.T) {
+	jst := time.FixedZone("JST", 9*60*60)
+
+	tests := []struct {
+		name string
+		tm   time.Time
+		loc  *time.Location
+		want date.Time
+	}{
+		{
+			name: "converts UTC to JST",
+			tm:   time.Date(2024, 5, 1, 15, 0, 0, 0, time.UTC),
+			loc:  jst,
+			want: date.NewTime(0, 0, 0, 0), // 15:00 UTC = 翌日00:00 JST
+		},
+		{
+			name: "converts JST to UTC",
+			tm:   time.Date(2024, 5, 1, 9, 0, 0, 0, jst),
+			loc:  time.UTC,
+			want: date.NewTime(0, 0, 0, 0), // 09:00 JST = 当日00:00 UTC
+		},
+		{
+			name: "nil location defaults to time.Local",
+			tm:   time.Date(2024, 5, 1, 15, 30, 45, 0, time.UTC),
+			loc:  nil,
+			want: date.TimeFromTime(time.Date(2024, 5, 1, 15, 30, 45, 0, time.UTC).In(time.Local)),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := date.TimeFromTimeIn(tt.tm, tt.loc)
+			assert.Equal(t, tt.want, got)
+		})
+	}
 }
 
 // TestTime_Clock は Clock メソッドが時・分・秒を正しく返すかをテストする。

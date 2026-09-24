@@ -40,6 +40,14 @@ func FromTime(t time.Time) Date {
 	}
 }
 
+// FromTimeIn は タイムゾーンとtime.Time から Date を生成して返します。
+func FromTimeIn(t time.Time, loc *time.Location) Date {
+	if loc == nil {
+		loc = time.Local
+	}
+	return FromTime(t.In(loc))
+}
+
 // Year は年を返します。
 func (d Date) Year() int {
 	return d.year
@@ -63,7 +71,11 @@ func (d Date) CompactString() string {
 // AddDate はDateに対して指定された年・月・日を加算した新しいDateを返します。
 func (d Date) AddDate(years int, months int, days int) Date {
 	t := d.ToTime(time.UTC).AddDate(years, months, days)
-	return FromTime(t)
+	return Date{
+		year:  t.Year(),
+		month: t.Month(),
+		day:   t.Day(),
+	}
 }
 
 // FirstDayOfMonth はその月の月初（1日）のDateを返します。

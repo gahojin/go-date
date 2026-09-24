@@ -26,6 +26,11 @@ func CompactFromTime(t time.Time) CompactDate {
 	return CompactDate{FromTime(t)}
 }
 
+// CompactFromTimeIn は タイムゾーンとtime.Time から CompactDate を生成して返します。
+func CompactFromTimeIn(t time.Time, loc *time.Location) CompactDate {
+	return CompactDate{FromTimeIn(t, loc)}
+}
+
 // String は日付を "YYYYMMDD" 形式（例: "20240501"）の文字列として返します。
 func (d CompactDate) String() string {
 	return d.CompactString()
