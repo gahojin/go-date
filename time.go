@@ -76,6 +76,11 @@ func (t Time) CompactString() string {
 	return t.Format("150405")
 }
 
+// Duration は0時0分0秒からの経過時間をDurationとして返します。
+func (t Time) Duration() time.Duration {
+	return time.Duration(t.hour)*time.Hour + time.Duration(t.min)*time.Minute + time.Duration(t.sec)*time.Second + time.Duration(t.nsec)*time.Nanosecond
+}
+
 // Add はTimeに対して指定されたDurationを加算した新しいTimeを返します。
 func (t Time) Add(d time.Duration) Time {
 	base := t.ToTime(time.UTC)
@@ -84,9 +89,7 @@ func (t Time) Add(d time.Duration) Time {
 
 // Sub は自身とotherの間の時間差（Duration）を返します。
 func (t Time) Sub(other Time) time.Duration {
-	d1 := time.Duration(t.hour)*time.Hour + time.Duration(t.min)*time.Minute + time.Duration(t.sec)*time.Second + time.Duration(t.nsec)*time.Nanosecond
-	d2 := time.Duration(other.hour)*time.Hour + time.Duration(other.min)*time.Minute + time.Duration(other.sec)*time.Second + time.Duration(other.nsec)*time.Nanosecond
-	return d1 - d2
+	return t.Duration() - other.Duration()
 }
 
 // IsZero は時刻がゼロ値（時・分・秒・ナノ秒がすべて0）であるかを判定します。

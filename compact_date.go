@@ -30,3 +30,12 @@ func CompactFromTime(t time.Time) CompactDate {
 func (d CompactDate) String() string {
 	return d.CompactString()
 }
+
+// ParseCompact は"YYYYMMDD" 形式に従って文字列をCompactDateにパースします。
+func ParseCompact(value string) (CompactDate, error) {
+	d, err := Parse("20060102", value)
+	if err != nil {
+		return CompactDate{}, err
+	}
+	return d.ToCompact(), nil
+}

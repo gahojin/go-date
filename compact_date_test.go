@@ -110,3 +110,45 @@ func TestCompactDate_String(t *testing.T) {
 
 	assert.Equal(t, "20251024", sut.String())
 }
+
+// TestParseCompact は ParseCompact 関数が文字列をCompactDateにパースできるかをテストする。
+func TestParseCompact(t *testing.T) {
+	tests := []struct {
+		name    string
+		value   string
+		want    CompactDate
+		wantErr bool
+	}{
+		{
+			name:    "valid standard date format",
+			value:   "20240501",
+			want:    NewCompact(2024, time.May, 1),
+			wantErr: false,
+		},
+		{
+			name:    "invalid format",
+			value:   "2024/05/01",
+			want:    CompactDate{},
+			wantErr: true,
+		},
+		{
+			name:    "invalid date value",
+			value:   "invalid-date",
+			want:    CompactDate{},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseCompact(tt.value)
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.True(t, got.IsZero())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
