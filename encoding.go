@@ -46,7 +46,7 @@ func (t *Time) UnmarshalText(text []byte) error {
 		*t = Time{}
 		return nil
 	}
-	parsed, err := ParseTime("15:04:05.999999999", string(text))
+	parsed, err := ParseTime(string(text))
 	if err != nil {
 		return err
 	}
