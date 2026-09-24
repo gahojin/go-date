@@ -71,6 +71,14 @@ func TimeFromTime(t time.Time) Time {
 	}
 }
 
+// TimeFromTimeIn は time.Time を指定されたタイムゾーン（nil指定時はtime.Local）に変換した上で Time を生成して返します。
+func TimeFromTimeIn(t time.Time, loc *time.Location) Time {
+	if loc == nil {
+		loc = time.Local
+	}
+	return TimeFromTime(t.In(loc))
+}
+
 // Hour は時を返します。
 func (t Time) Hour() int {
 	return t.hour
