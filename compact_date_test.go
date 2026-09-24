@@ -71,6 +71,10 @@ func TestNewCompactDate(t *testing.T) {
 func TestCompactFromTimeIn(t *testing.T) {
 	jst := time.FixedZone("JST", 9*60*60)
 
+	originalLocal := time.Local
+	time.Local = time.FixedZone("UTC+12", 12*60*60)
+	defer func() { time.Local = originalLocal }()
+
 	tests := []struct {
 		name string
 		tm   time.Time
@@ -91,16 +95,16 @@ func TestCompactFromTimeIn(t *testing.T) {
 		},
 		{
 			name: "nil location defaults to time.Local",
-			tm:   time.Date(2024, 5, 1, 23, 30, 0, 0, jst),
+			tm:   time.Date(2024, 5, 1, 23, 30, 0, 0, time.UTC),
 			loc:  nil,
-			want: NewCompact(2024, 5, 1),
+			want: NewCompact(2024, 5, 2),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := CompactFromTimeIn(tt.tm, tt.loc)
-			assert.True(t, tt.want.Equal(got.Date))
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

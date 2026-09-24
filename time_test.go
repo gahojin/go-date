@@ -133,6 +133,10 @@ func TestTimeFromTime(t *testing.T) {
 func TestTimeFromTimeIn(t *testing.T) {
 	jst := time.FixedZone("JST", 9*60*60)
 
+	originalLocal := time.Local
+	time.Local = time.FixedZone("UTC+12", 12*60*60)
+	defer func() { time.Local = originalLocal }()
+
 	tests := []struct {
 		name string
 		tm   time.Time
@@ -155,7 +159,7 @@ func TestTimeFromTimeIn(t *testing.T) {
 			name: "nil location defaults to time.Local",
 			tm:   time.Date(2024, 5, 1, 15, 30, 45, 0, time.UTC),
 			loc:  nil,
-			want: date.TimeFromTime(time.Date(2024, 5, 1, 15, 30, 45, 0, time.UTC).In(time.Local)),
+			want: date.NewTime(3, 30, 45, 0),
 		},
 	}
 

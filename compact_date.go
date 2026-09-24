@@ -26,7 +26,7 @@ func CompactFromTime(t time.Time) CompactDate {
 	return CompactDate{FromTime(t)}
 }
 
-// CompactFromTimeIn は タイムゾーンとtime.Time から CompactDate を生成して返します。
+// CompactFromTimeIn は time.Time を指定されたタイムゾーン（nil指定時はtime.Local）に変換した上で CompactDate を生成して返します。
 func CompactFromTimeIn(t time.Time, loc *time.Location) CompactDate {
 	return CompactDate{FromTimeIn(t, loc)}
 }

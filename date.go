@@ -40,7 +40,7 @@ func FromTime(t time.Time) Date {
 	}
 }
 
-// FromTimeIn は タイムゾーンとtime.Time から Date を生成して返します。
+// FromTimeIn は time.Time を指定されたタイムゾーン（nil指定時はtime.Local）に変換した上で Date を生成して返します。
 func FromTimeIn(t time.Time, loc *time.Location) Date {
 	if loc == nil {
 		loc = time.Local
