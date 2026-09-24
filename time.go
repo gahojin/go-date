@@ -3,6 +3,9 @@ package date
 import (
 	"cmp"
 	"encoding"
+	"fmt"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -22,17 +25,39 @@ var (
 	_ IsZeroer                 = (*Time)(nil)
 )
 
-// NewTime は指定された時・分・秒・ナノ秒からTimeを生成して返します。
-// time.Dateと同様に、正規化された時刻（例: 25時 -> 1時、-1分 -> 前の時間の59分）を生成します。
-func NewTime(hour, min, sec, nsec int) Time {
-	t := time.Date(2000, 1, 1, hour, min, sec, nsec, time.UTC)
-	return Time{
-		hour:    t.Hour(),
-		min:     t.Minute(),
-		sec:     t.Second(),
-		nsec:    t.Nanosecond(),
-		present: true,
+// divMod は a を b で割った商と、常に非負になる余りを返します。
+// 例: divMod(-1, 60) は (-1, 59) を返します。
+func divMod[T int | time.Duration](a, b T) (q, r T) {
+	q = a / b
+	r = a % b
+	if r < 0 {
+		q--
+		r += b
 	}
+	return q, r
+}
+
+func durationToTime(d time.Duration) Time {
+	h, rem := divMod(d, time.Hour)
+	m, rem := divMod(rem, time.Minute)
+	s, ns := divMod(rem, time.Second)
+	return Time{hour: int(h), min: int(m), sec: int(s), nsec: int(ns), present: true}
+}
+
+// NewTime は指定された時・分・秒・ナノ秒からTimeを生成して返します。
+// 正規化は分や秒、ナノ秒のみとし、時はそのまま保持する (25時は25時として保持)
+func NewTime(hour, min, sec, nsec int) Time {
+	var carry int
+	carry, nsec = divMod(nsec, int(time.Second))
+	sec += carry
+
+	carry, sec = divMod(sec, 60)
+	min += carry
+
+	carry, min = divMod(min, 60)
+	hour += carry
+
+	return Time{hour: hour, min: min, sec: sec, nsec: nsec, present: true}
 }
 
 // TimeFromTime は time.Time から Time を生成して返します。
@@ -73,7 +98,7 @@ func (t Time) Clock() (int, int, int) {
 
 // CompactString は時刻を "HHMMSS" 形式（例: "150405"）の文字列として返します。
 func (t Time) CompactString() string {
-	return t.Format("150405")
+	return fmt.Sprintf("%02d%02d%02d", t.hour, t.min, t.sec)
 }
 
 // Duration は0時0分0秒からの経過時間をDurationとして返します。
@@ -83,13 +108,17 @@ func (t Time) Duration() time.Duration {
 
 // Add はTimeに対して指定されたDurationを加算した新しいTimeを返します。
 func (t Time) Add(d time.Duration) Time {
-	base := t.ToTime(time.UTC)
-	return TimeFromTime(base.Add(d))
+	return durationToTime(t.Duration() + d)
 }
 
 // Sub は自身とotherの間の時間差（Duration）を返します。
 func (t Time) Sub(other Time) time.Duration {
 	return t.Duration() - other.Duration()
+}
+
+// HourMinute は時刻を "HH:MM" 形式の文字列として返します
+func (t Time) HourMinute() string {
+	return fmt.Sprintf("%02d:%02d", t.hour, t.min)
 }
 
 // IsZero は時刻がゼロ値（時・分・秒・ナノ秒がすべて0）であるかを判定します。
@@ -158,23 +187,34 @@ func (t Time) Format(layout string) string {
 
 // String は時刻を文字列として返します。ナノ秒がある場合は小数秒を含みます（例: "15:04:05.123456789"）。
 func (t Time) String() string {
+	s := fmt.Sprintf("%02d:%02d:%02d", t.hour, t.min, t.sec)
 	if t.nsec != 0 {
-		return t.Format("15:04:05.999999999")
+		s += strings.TrimRight(fmt.Sprintf(".%09d", t.nsec), "0")
 	}
-	return t.Format(time.TimeOnly)
+	return s
 }
 
-// ParseTime は指定されたレイアウトに従って文字列をTimeにパースします。
-func ParseTime(layout, value string) (Time, error) {
-	parsed, err := time.Parse(layout, value)
-	if err != nil {
-		return Time{}, err
+// ParseTime は"HH:MM:SS"（またはナノ秒付き "H:MM:SS.nnnnnnnnn"）形式の文字列をTimeにパースします。
+// 24以上の時（例: "26:00:00"）もそのまま扱います。
+func ParseTime(value string) (Time, error) {
+	sec, nsecPart, hasFrac := strings.Cut(value, ".")
+	parts := strings.Split(sec, ":")
+	if len(parts) != 3 {
+		return Time{}, fmt.Errorf("date: invalid time %q", value)
 	}
-	return Time{
-		hour:    parsed.Hour(),
-		min:     parsed.Minute(),
-		sec:     parsed.Second(),
-		nsec:    parsed.Nanosecond(),
-		present: true,
-	}, nil
+	h, err1 := strconv.Atoi(parts[0])
+	m, err2 := strconv.Atoi(parts[1])
+	s, err3 := strconv.Atoi(parts[2])
+	if err1 != nil || err2 != nil || err3 != nil {
+		return Time{}, fmt.Errorf("date: invalid time %q", value)
+	}
+	ns := 0
+	if hasFrac {
+		padded := (nsecPart + "000000000")[:9]
+		ns, err1 = strconv.Atoi(padded)
+		if err1 != nil {
+			return Time{}, fmt.Errorf("date: invalid time %q", value)
+		}
+	}
+	return NewTime(h, m, s, ns), nil
 }

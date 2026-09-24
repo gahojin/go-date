@@ -44,12 +44,23 @@ func TestNewTime(t *testing.T) {
 			wantNsec: 0,
 		},
 		{
-			name:     "normalize 25 hour to 1 hour",
+			name:     "hour is not normalized (25 hour stays 25)",
 			hour:     25,
 			min:      0,
 			sec:      0,
 			nsec:     0,
-			wantHour: 1,
+			wantHour: 25,
+			wantMin:  0,
+			wantSec:  0,
+			wantNsec: 0,
+		},
+		{
+			name:     "hour beyond 24 (26 hour stays 26)",
+			hour:     26,
+			min:      0,
+			sec:      0,
+			nsec:     0,
+			wantHour: 26,
 			wantMin:  0,
 			wantSec:  0,
 			wantNsec: 0,
@@ -116,6 +127,9 @@ func TestTime_CompactString(t *testing.T) {
 
 	tm2 := date.NewTime(15, 30, 45, 0)
 	assert.Equal(t, "153045", tm2.CompactString())
+
+	tm3 := date.NewTime(26, 63, 45, 0)
+	assert.Equal(t, "270345", tm3.CompactString())
 }
 
 // TestTime_Add は Add メソッドが Duration を正しく加算した Time を返すかをテストする。
@@ -125,13 +139,17 @@ func TestTime_Add(t *testing.T) {
 	got := tm.Add(1*time.Hour + 30*time.Minute + 15*time.Second)
 	assert.Equal(t, date.NewTime(11, 30, 15, 0), got)
 
-	// 日跨ぎの正規化
+	// 日跨ぎ
 	got2 := tm.Add(15 * time.Hour)
-	assert.Equal(t, date.NewTime(1, 0, 0, 0), got2)
+	assert.Equal(t, date.NewTime(25, 0, 0, 0), got2)
 
 	// 負の加算
 	got3 := tm.Add(-2 * time.Hour)
 	assert.Equal(t, date.NewTime(8, 0, 0, 0), got3)
+
+	// 結果が負になる
+	got4 := tm.Add(-12 * time.Hour)
+	assert.Equal(t, date.NewTime(-2, 0, 0, 0), got4)
 }
 
 // TestTime_Sub は Sub メソッドが2つの Time の差（Duration）を正しく計算できるかをテストする。
@@ -141,6 +159,47 @@ func TestTime_Sub(t *testing.T) {
 
 	assert.Equal(t, 1*time.Hour+30*time.Minute, t1.Sub(t2))
 	assert.Equal(t, -(1*time.Hour + 30*time.Minute), t2.Sub(t1))
+}
+
+// TestTime_HourMinute は Time.HourMinute メソッドをテストする。
+func TestTime_HourMinute(t *testing.T) {
+	tests := []struct {
+		name string
+		tm   date.Time
+		want string
+	}{
+		{
+			name: "standard time",
+			tm:   date.NewTime(15, 30, 45, 0),
+			want: "15:30",
+		},
+		{
+			name: "single digit hour",
+			tm:   date.NewTime(9, 5, 0, 0),
+			want: "09:05",
+		},
+		{
+			name: "zero time",
+			tm:   date.Time{},
+			want: "00:00",
+		},
+		{
+			name: "hour beyond 24",
+			tm:   date.NewTime(26, 0, 0, 0),
+			want: "26:00",
+		},
+		{
+			name: "seconds and nanoseconds are ignored",
+			tm:   date.NewTime(15, 30, 45, 123456789),
+			want: "15:30",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, tt.tm.HourMinute())
+		})
+	}
 }
 
 // TestTime_IsZero は IsZero メソッドがゼロ値を正しく判定できるかをテストする。
@@ -298,36 +357,43 @@ func TestTime_Format_String(t *testing.T) {
 func TestParseTime(t *testing.T) {
 	tests := []struct {
 		name    string
-		layout  string
 		value   string
 		want    date.Time
 		wantErr bool
 	}{
 		{
 			name:    "valid standard time",
-			layout:  time.TimeOnly,
 			value:   "15:30:45",
 			want:    date.NewTime(15, 30, 45, 0),
 			wantErr: false,
 		},
 		{
-			name:    "valid short time",
-			layout:  "15:04",
-			value:   "09:15",
-			want:    date.NewTime(9, 15, 0, 0),
-			wantErr: false,
-		},
-		{
-			name:    "valid time with nanoseconds layout",
-			layout:  "15:04:05.999999999",
+			name:    "valid time with nanoseconds",
 			value:   "15:30:45.123456789",
 			want:    date.NewTime(15, 30, 45, 123456789),
 			wantErr: false,
 		},
 		{
+			name:    "valid time with hour beyond 24",
+			value:   "26:00:00",
+			want:    date.NewTime(26, 0, 0, 0),
+			wantErr: false,
+		},
+		{
+			name:    "minute out of range is normalized",
+			value:   "15:60:00",
+			want:    date.NewTime(16, 0, 0, 0),
+			wantErr: false,
+		},
+		{
 			name:    "invalid format",
-			layout:  time.TimeOnly,
 			value:   "invalid",
+			want:    date.Time{},
+			wantErr: true,
+		},
+		{
+			name:    "hour:minute without seconds is not supported",
+			value:   "09:15",
 			want:    date.Time{},
 			wantErr: true,
 		},
@@ -335,7 +401,7 @@ func TestParseTime(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := date.ParseTime(tt.layout, tt.value)
+			got, err := date.ParseTime(tt.value)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.True(t, got.IsZero())
