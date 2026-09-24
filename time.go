@@ -198,23 +198,39 @@ func (t Time) String() string {
 // 24以上の時（例: "26:00:00"）もそのまま扱います。
 func ParseTime(value string) (Time, error) {
 	sec, nsecPart, hasFrac := strings.Cut(value, ".")
-	parts := strings.Split(sec, ":")
-	if len(parts) != 3 {
+
+	hourPart, rest, ok := strings.Cut(sec, ":")
+	if !ok {
 		return Time{}, fmt.Errorf("date: invalid time %q", value)
 	}
-	h, err1 := strconv.Atoi(parts[0])
-	m, err2 := strconv.Atoi(parts[1])
-	s, err3 := strconv.Atoi(parts[2])
-	if err1 != nil || err2 != nil || err3 != nil {
+	minPart, secPart, ok := strings.Cut(rest, ":")
+	if !ok {
 		return Time{}, fmt.Errorf("date: invalid time %q", value)
 	}
+
+	var err error
+	var h, m, s int
+	if h, err = strconv.Atoi(hourPart); err != nil {
+		return Time{}, fmt.Errorf("date: invalid time %q: %w", value, err)
+	}
+	if m, err = strconv.Atoi(minPart); err != nil {
+		return Time{}, fmt.Errorf("date: invalid time %q: %w", value, err)
+	}
+	if s, err = strconv.Atoi(secPart); err != nil {
+		return Time{}, fmt.Errorf("date: invalid time %q: %w", value, err)
+	}
+
 	ns := 0
 	if hasFrac {
-		padded := (nsecPart + "000000000")[:9]
-		ns, err1 = strconv.Atoi(padded)
-		if err1 != nil {
-			return Time{}, fmt.Errorf("date: invalid time %q", value)
+		if len(nsecPart) == 0 || len(nsecPart) > 9 {
+			return Time{}, fmt.Errorf("date: invalid time %q: fractional part must be 1-9 digits", value)
+		}
+		padded := nsecPart + strings.Repeat("0", 9-len(nsecPart))
+		ns, err = strconv.Atoi(padded)
+		if err != nil {
+			return Time{}, fmt.Errorf("date: invalid time %q: %w", value, err)
 		}
 	}
+
 	return NewTime(h, m, s, ns), nil
 }

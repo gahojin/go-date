@@ -349,6 +349,9 @@ func TestTime_Format_String(t *testing.T) {
 	assert.Equal(t, "15:30", tm.Format("15:04"))
 	assert.Equal(t, "03:30 PM", tm.Format("03:04 PM"))
 
+	tm = date.NewTime(25, 0, 0, 0)
+	assert.Equal(t, "01:00:00", tm.Format("15:04:05"))
+
 	tmNano := date.NewTime(15, 30, 45, 123456789)
 	assert.Equal(t, "15:30:45.123456789", tmNano.String())
 }
@@ -396,6 +399,30 @@ func TestParseTime(t *testing.T) {
 			value:   "09:15",
 			want:    date.Time{},
 			wantErr: true,
+		},
+		{
+			name:    "empty fractional part",
+			value:   "15:30:45.",
+			want:    date.Time{},
+			wantErr: true,
+		},
+		{
+			name:    "fractional part too long",
+			value:   "15:30:45.1234567890",
+			want:    date.Time{},
+			wantErr: true,
+		},
+		{
+			name:    "fractional part with trailing junk",
+			value:   "15:30:45.123456789junk",
+			want:    date.Time{},
+			wantErr: true,
+		},
+		{
+			name:    "single digit fractional part",
+			value:   "15:30:45.1",
+			want:    date.NewTime(15, 30, 45, 100000000),
+			wantErr: false,
 		},
 	}
 
